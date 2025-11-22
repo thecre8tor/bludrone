@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DroneDeliverySessionEntity, DroneEntity, DroneState } from '../entities';
-import { Repository } from 'typeorm';
+import {
+  DroneDeliverySessionEntity,
+  DroneEntity,
+  DroneMedicationLoadEntity,
+  DroneState,
+} from '../entities';
+import { IsNull, Repository } from 'typeorm';
 import { RegisterDroneDto } from '../dto';
 import { DatabaseError, NotFoundError, Result, tryCatch } from '../../../core';
 import { Drone } from '../models';
 import { ResourceNotFoundError } from '../../../core/errors/repository-error';
+import { LoadMedicationDto } from '../dto/load_medication.dto';
+import { LoadDroneResponse } from '../payload';
 
 @Injectable()
 export class DroneRepository {
@@ -13,6 +20,8 @@ export class DroneRepository {
     @InjectRepository(DroneEntity) private readonly droneRepository: Repository<DroneEntity>,
     @InjectRepository(DroneDeliverySessionEntity)
     private readonly droneDeliverySessionRepository: Repository<DroneDeliverySessionEntity>,
+    @InjectRepository(DroneMedicationLoadEntity)
+    private readonly droneMedicationLoadRepository: Repository<DroneMedicationLoadEntity>,
   ) {}
 
   async create(dto: RegisterDroneDto): Promise<Result<Drone, DatabaseError>> {
@@ -121,6 +130,74 @@ export class DroneRepository {
         await this.droneRepository.update(droneId, { state });
       },
       (error) => new DatabaseError(`Failed to update drone state: ${error}`),
+    );
+
+    return result;
+  }
+
+  async findAcquiredDroneBySessionId(
+    sessionId: string,
+  ): Promise<Result<DroneDeliverySessionEntity, NotFoundError | DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        const sessionEntity = await this.droneDeliverySessionRepository.findOne({
+          where: { id: sessionId, completed_at: IsNull() },
+          relations: ['drone'],
+        });
+
+        if (!sessionEntity) {
+          throw new ResourceNotFoundError(`Session with id ${sessionId} not found`);
+        }
+
+        return sessionEntity;
+      },
+      (error) => {
+        if (error instanceof ResourceNotFoundError) {
+          return new NotFoundError(error.message);
+        }
+
+        return new DatabaseError(`Failed to find acquired drone: ${error}`);
+      },
+    );
+
+    return result;
+  }
+
+  async getTotalLoadedWeight(sessionId: string): Promise<number> {
+    const result = await this.droneMedicationLoadRepository
+      .createQueryBuilder('load')
+      .select('SUM(med.weight * load.quantity)', 'total')
+      .leftJoin('load.medication', 'med')
+      .where('load.session_id = :sessionId', { sessionId })
+      .getRawOne();
+
+    return Number(result?.total || 0);
+  }
+
+  async loadMedication(
+    dto: LoadMedicationDto,
+    droneId: string,
+  ): Promise<Result<LoadDroneResponse, DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        const loadEntity = this.droneMedicationLoadRepository.create({
+          session: { id: dto.session_id },
+          drone: { id: droneId },
+          medication: { id: dto.medication_id },
+          quantity: dto.quantity,
+        });
+
+        const savedEntity = await this.droneMedicationLoadRepository.save(loadEntity);
+
+        return {
+          id: savedEntity.id,
+          drone_id: savedEntity.drone.id,
+          medication_id: savedEntity.medication.id,
+          quantity: savedEntity.quantity,
+          loaded_at: savedEntity.loaded_at,
+        };
+      },
+      (error) => new DatabaseError(`Failed to load medication: ${error}`),
     );
 
     return result;

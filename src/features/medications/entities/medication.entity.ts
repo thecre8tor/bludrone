@@ -23,9 +23,6 @@ export class MedicationEntity {
   @Column({ type: 'varchar', length: 500, nullable: true })
   image: string | null;
 
-  @Column({ type: 'uuid', nullable: true })
-  drone_id: string | null;
-
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
 

@@ -6,7 +6,6 @@ export class Medication {
   weight: number;
   code: string;
   image?: string;
-  droneId?: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -17,7 +16,6 @@ export class Medication {
     medication.weight = Number(entity.weight);
     medication.code = entity.code;
     medication.image = entity.image || undefined;
-    medication.droneId = entity.drone_id || undefined;
     medication.createdAt = entity.created_at;
     medication.updatedAt = entity.updated_at;
     return medication;

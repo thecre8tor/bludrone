@@ -1,13 +1,27 @@
 import { Drone } from '../models';
 import { DroneRepository } from '../repository';
 import { RegisterDroneDto } from '../dto';
-import { AppError, BadRequestError, ConflictError, err, ok, Result } from '../../../core';
+import {
+  AppError,
+  BadRequestError,
+  ConflictError,
+  err,
+  NotFoundError,
+  ok,
+  Result,
+} from '../../../core';
 import { Injectable } from '@nestjs/common';
-import { DroneState } from '../entities';
+import { DroneMedicationLoadEntity, DroneState } from '../entities';
+import { LoadMedicationDto } from '../dto/load_medication.dto';
+import { MedicationRepository } from '../../medications/repository';
+import { LoadDroneResponse } from '../payload';
 
 @Injectable()
 export class DroneService {
-  constructor(private readonly droneRepository: DroneRepository) {}
+  constructor(
+    private readonly droneRepository: DroneRepository,
+    private readonly medicationRepository: MedicationRepository,
+  ) {}
 
   async registerDrone(dto: RegisterDroneDto): Promise<Result<Drone, AppError>> {
     const existingDrone = await this.droneRepository.findBySerialNumber(dto.serial_number);
@@ -70,5 +84,52 @@ export class DroneService {
     }
 
     return ok(sessionId);
+  }
+
+  async loadMedication(dto: LoadMedicationDto): Promise<Result<LoadDroneResponse, AppError>> {
+    const sessionResult = await this.droneRepository.findAcquiredDroneBySessionId(dto.session_id);
+
+    if (sessionResult.isErr()) {
+      return err(sessionResult.error);
+    }
+
+    const session = sessionResult.value;
+    const drone = session.drone;
+
+    if (drone.battery_capacity < 25) {
+      return err(new BadRequestError('Drone battery too low (<25%). Cannot load medication.'));
+    }
+
+    if (!['LOADING'].includes(drone.state)) {
+      return err(new BadRequestError(`Cannot load medication. Drone is currently ${drone.state}.`));
+    }
+
+    const medicationResult = await this.medicationRepository.findById(dto.medication_id);
+
+    // TODO: Handle database errors properly
+    if (medicationResult.isErr()) {
+      return err(new NotFoundError(medicationResult.error.message));
+    }
+
+    const medication = medicationResult.value;
+
+    const currentWeight = await this.droneRepository.getTotalLoadedWeight(dto.session_id);
+    const additionalWeight = medication.weight * dto.quantity;
+
+    if (currentWeight + additionalWeight > drone.weight_limit) {
+      return err(
+        new BadRequestError(
+          `Loading exceeds drone weight limit. Current=${currentWeight}, Attempt=${additionalWeight}, Limit=${drone.weight_limit}`,
+        ),
+      );
+    }
+
+    const result = await this.droneRepository.loadMedication(dto, drone.id);
+
+    if (result.isErr()) {
+      return err(result.error);
+    }
+
+    return ok(result.value);
   }
 }
