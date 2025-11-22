@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { DroneDeliverySessionEntity } from './drone_delivery_session.entity';
 import { DroneEntity } from './drone.entity';
-import { MedicationEntity } from '@/features/medications/entities';
+import { MedicationEntity } from '../../medications/entities';
 
 @Entity('drone_medication_loads')
 export class DroneMedicationLoadEntity {

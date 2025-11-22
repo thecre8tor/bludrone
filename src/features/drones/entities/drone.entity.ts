@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { DroneDeliverySessionEntity } from './drone_delivery_session.entity';
+import { BatteryAuditEntity } from '../../audit/entities';
 
 export enum DroneModel {
   LIGHTWEIGHT = 'Lightweight',
@@ -53,6 +54,9 @@ export class DroneEntity {
 
   @OneToMany(() => DroneDeliverySessionEntity, (session) => session.drone)
   delivery_sessions: DroneDeliverySessionEntity[];
+
+  @OneToMany(() => BatteryAuditEntity, (audit) => audit.drone)
+  battery_audits: BatteryAuditEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;
