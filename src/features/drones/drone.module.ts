@@ -13,6 +13,6 @@ import { MedicationModule } from '../medications/medication.module';
   ],
   controllers: [DroneController, SessionController],
   providers: [DroneService, DroneRepository],
-  exports: [],
+  exports: [DroneRepository],
 })
 export class DroneModule {}

@@ -215,7 +215,9 @@ export class DroneRepository {
     return result;
   }
 
-  async getLoadedMedications(droneId: string): Promise<Result<LoadedMedicationsResponse, NotFoundError | DatabaseError>> {
+  async getLoadedMedications(
+    droneId: string,
+  ): Promise<Result<LoadedMedicationsResponse, NotFoundError | DatabaseError>> {
     const result = await tryCatch(
       async () => {
         // First verify the drone exists
@@ -234,12 +236,14 @@ export class DroneRepository {
           order: { loaded_at: 'DESC' },
         });
 
-        const medications: LoadedMedicationsResponse['medications'] = medicationLoads.map((load) => ({
-          id: load.id,
-          medication: Medication.fromEntity(load.medication),
-          quantity: load.quantity,
-          loaded_at: load.loaded_at,
-        }));
+        const medications: LoadedMedicationsResponse['medications'] = medicationLoads.map(
+          (load) => ({
+            id: load.id,
+            medication: Medication.fromEntity(load.medication),
+            quantity: load.quantity,
+            loaded_at: load.loaded_at,
+          }),
+        );
 
         return {
           drone_id: droneId,
@@ -272,6 +276,21 @@ export class DroneRepository {
         return droneEntities.map((entity) => Drone.fromEntity(entity, 0));
       },
       (error) => new DatabaseError(`Failed to find available drones: ${error}`),
+    );
+
+    return result;
+  }
+
+  async findAllForAudit(): Promise<Result<DroneEntity[], DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        return await this.droneRepository.find({
+          order: {
+            created_at: 'DESC',
+          },
+        });
+      },
+      (error) => new DatabaseError(`Failed to fetch drones for audit: ${error}`),
     );
 
     return result;
