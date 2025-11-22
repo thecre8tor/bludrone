@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export abstract class AppError extends Error {
-  abstract readonly statusCode: HttpStatus;
+  abstract readonly status_code: HttpStatus;
   abstract readonly code: string;
 
   constructor(message: string) {
@@ -11,21 +11,36 @@ export abstract class AppError extends Error {
   }
 
   toHttpException(): HttpException {
+    // 4xx errors use "fail", 5xx errors use "error"
+    const isServerError = this.status_code >= 500;
+
+    const errorDetail = {
+      code: this.code,
+      message: this.message,
+    };
+
+    if (isServerError) {
+      return new HttpException(
+        {
+          status: 'error',
+          error: errorDetail,
+        },
+        this.status_code,
+      );
+    }
+
     return new HttpException(
       {
-        code: this.code,
-        message: this.message,
+        status: 'fail',
+        error: errorDetail,
       },
-      this.statusCode,
+      this.status_code,
     );
   }
 }
 
-/**
- * Validation error for input validation failures
- */
 export class ValidationError extends AppError {
-  readonly statusCode = HttpStatus.BAD_REQUEST;
+  readonly status_code = HttpStatus.BAD_REQUEST;
   readonly code = 'VALIDATION_ERROR';
 
   constructor(message: string) {
@@ -33,11 +48,8 @@ export class ValidationError extends AppError {
   }
 }
 
-/**
- * Not found error for missing resources
- */
 export class NotFoundError extends AppError {
-  readonly statusCode = HttpStatus.NOT_FOUND;
+  readonly status_code = HttpStatus.NOT_FOUND;
   readonly code = 'NOT_FOUND';
 
   constructor(message: string) {
@@ -45,11 +57,8 @@ export class NotFoundError extends AppError {
   }
 }
 
-/**
- * Unauthorized error for authentication failures
- */
 export class UnauthorizedError extends AppError {
-  readonly statusCode = HttpStatus.UNAUTHORIZED;
+  readonly status_code = HttpStatus.UNAUTHORIZED;
   readonly code = 'UNAUTHORIZED';
 
   constructor(message: string = 'Unauthorized access') {
@@ -57,11 +66,8 @@ export class UnauthorizedError extends AppError {
   }
 }
 
-/**
- * Forbidden error for authorization failures
- */
 export class ForbiddenError extends AppError {
-  readonly statusCode = HttpStatus.FORBIDDEN;
+  readonly status_code = HttpStatus.FORBIDDEN;
   readonly code = 'FORBIDDEN';
 
   constructor(message: string = 'Forbidden') {
@@ -69,11 +75,8 @@ export class ForbiddenError extends AppError {
   }
 }
 
-/**
- * Conflict error for conflicting operations
- */
 export class ConflictError extends AppError {
-  readonly statusCode = HttpStatus.CONFLICT;
+  readonly status_code = HttpStatus.CONFLICT;
   readonly code = 'CONFLICT';
 
   constructor(message: string) {
@@ -81,11 +84,8 @@ export class ConflictError extends AppError {
   }
 }
 
-/**
- * Database error for database operation failures
- */
 export class DatabaseError extends AppError {
-  readonly statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+  readonly status_code = HttpStatus.INTERNAL_SERVER_ERROR;
   readonly code = 'DATABASE_ERROR';
 
   constructor(message: string = 'Database operation failed') {
@@ -93,11 +93,8 @@ export class DatabaseError extends AppError {
   }
 }
 
-/**
- * Internal error for unexpected failures
- */
 export class InternalError extends AppError {
-  readonly statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+  readonly status_code = HttpStatus.INTERNAL_SERVER_ERROR;
   readonly code = 'INTERNAL_ERROR';
 
   constructor(message: string = 'An internal error occurred') {

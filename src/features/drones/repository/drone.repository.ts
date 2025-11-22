@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DroneEntity, DroneState } from '../entities';
 import { Repository } from 'typeorm';
 import { RegisterDroneDto } from '../dto';
-import { DatabaseError, Result, tryCatch } from '@/core';
+import { DatabaseError, Result, tryCatch } from '../../../core';
 import { Drone } from '../models';
 
 @Injectable()
@@ -27,6 +27,31 @@ export class DroneRepository {
         return Drone.fromEntity(savedEntity);
       },
       (error) => new DatabaseError(`Failed to register drone: ${error}`),
+    );
+
+    return result;
+  }
+
+  async findBySerialNumber(serialNumber: string): Promise<Result<Drone | null, DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        const droneEntity = await this.droneRepository.findOne({
+          where: { serial_number: serialNumber },
+        });
+
+        if (!droneEntity) {
+          return null;
+        }
+
+        // const currentWeight = droneEntity.medication
+        //   ? droneEntity.medications.reduce((sum, med) => sum + Number(med.weight), 0)
+        //   : 0;
+
+        const currentWeight = 0;
+
+        return Drone.fromEntity(droneEntity, currentWeight);
+      },
+      (error) => new DatabaseError(`Failed to find drone: ${error}`),
     );
 
     return result;

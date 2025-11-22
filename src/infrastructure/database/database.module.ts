@@ -1,6 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import {
+  DroneEntity,
+  DroneDeliverySessionEntity,
+  DroneMedicationLoadEntity,
+} from '../../features/drones/entities';
+import { MedicationEntity } from '../../features/medications/entities';
+import { BatteryAuditEntity } from '../../features/audit/entities';
 
 @Module({
   imports: [
@@ -13,7 +20,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         username: configService.get<string>('DATABASE_USER', 'bluser'),
         password: configService.get<string>('DATABASE_PASSWORD', 'secret'),
         database: configService.get('DATABASE_NAME', 'bludrone'),
-        entities: ['dist/**/**/*.entity.js'],
+        entities: [
+          DroneEntity,
+          DroneDeliverySessionEntity,
+          DroneMedicationLoadEntity,
+          MedicationEntity,
+          BatteryAuditEntity,
+        ],
         synchronize: false, // Don't auto-sync in production
         logging: configService.get('NODE_ENV') === 'development',
       }),
