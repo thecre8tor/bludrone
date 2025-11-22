@@ -84,6 +84,15 @@ export class ConflictError extends AppError {
   }
 }
 
+export class BadRequestError extends AppError {
+  readonly status_code = HttpStatus.BAD_REQUEST;
+  readonly code = 'BAD_REQUEST';
+
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export class DatabaseError extends AppError {
   readonly status_code = HttpStatus.INTERNAL_SERVER_ERROR;
   readonly code = 'DATABASE_ERROR';

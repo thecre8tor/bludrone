@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DroneDeliverySessionEntity, DroneEntity, DroneMedicationLoadEntity } from './entities';
-import { DroneController } from './controllers';
+import { DroneController, SessionController } from './controllers';
 import { DroneService } from './services';
 import { DroneRepository } from './repository';
 
@@ -9,7 +9,7 @@ import { DroneRepository } from './repository';
   imports: [
     TypeOrmModule.forFeature([DroneEntity, DroneDeliverySessionEntity, DroneMedicationLoadEntity]),
   ],
-  controllers: [DroneController],
+  controllers: [DroneController, SessionController],
   providers: [DroneService, DroneRepository],
   exports: [],
 })
