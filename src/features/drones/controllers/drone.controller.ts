@@ -4,6 +4,7 @@ import { Drone } from '../models';
 import { DroneService } from '../services';
 import { AppError } from '../../../core';
 import { ApiResponseBuilder, ApiResponse } from '../../../core/responses/api-response';
+import { LoadedMedicationsResponse } from '../payload';
 
 @Controller('drones')
 export class DroneController {
@@ -40,6 +41,20 @@ export class DroneController {
 
     if (result.isOk()) {
       return ApiResponseBuilder.success('Loading session started', { session_id: result.value });
+    } else {
+      const error = result.error as AppError;
+      throw error.toHttpException();
+    }
+  }
+
+  @Get(':id/medications')
+  async getLoadedMedications(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<LoadedMedicationsResponse>> {
+    const result = await this.droneService.getLoadedMedications(id);
+
+    if (result.isOk()) {
+      return ApiResponseBuilder.success('Loaded medications fetched successfully', result.value);
     } else {
       const error = result.error as AppError;
       throw error.toHttpException();

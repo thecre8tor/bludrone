@@ -14,7 +14,7 @@ import { Injectable } from '@nestjs/common';
 import { DroneMedicationLoadEntity, DroneState } from '../entities';
 import { LoadMedicationDto } from '../dto/load_medication.dto';
 import { MedicationRepository } from '../../medications/repository';
-import { LoadDroneResponse } from '../payload';
+import { LoadDroneResponse, LoadedMedicationsResponse } from '../payload';
 
 @Injectable()
 export class DroneService {
@@ -125,6 +125,16 @@ export class DroneService {
     }
 
     const result = await this.droneRepository.loadMedication(dto, drone.id);
+
+    if (result.isErr()) {
+      return err(result.error);
+    }
+
+    return ok(result.value);
+  }
+
+  async getLoadedMedications(droneId: string): Promise<Result<LoadedMedicationsResponse, AppError>> {
+    const result = await this.droneRepository.getLoadedMedications(droneId);
 
     if (result.isErr()) {
       return err(result.error);

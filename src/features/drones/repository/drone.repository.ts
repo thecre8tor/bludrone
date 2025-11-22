@@ -12,7 +12,8 @@ import { DatabaseError, NotFoundError, Result, tryCatch } from '../../../core';
 import { Drone } from '../models';
 import { ResourceNotFoundError } from '../../../core/errors/repository-error';
 import { LoadMedicationDto } from '../dto/load_medication.dto';
-import { LoadDroneResponse } from '../payload';
+import { LoadDroneResponse, LoadedMedicationsResponse } from '../payload';
+import { Medication } from '../../medications/models';
 
 @Injectable()
 export class DroneRepository {
@@ -209,6 +210,49 @@ export class DroneRepository {
         };
       },
       (error) => new DatabaseError(`Failed to load medication: ${error}`),
+    );
+
+    return result;
+  }
+
+  async getLoadedMedications(droneId: string): Promise<Result<LoadedMedicationsResponse, NotFoundError | DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        // First verify the drone exists
+        const droneEntity = await this.droneRepository.findOne({
+          where: { id: droneId },
+        });
+
+        if (!droneEntity) {
+          throw new ResourceNotFoundError(`Drone with id ${droneId} not found`);
+        }
+
+        // Get all medication loads for this drone
+        const medicationLoads = await this.droneMedicationLoadRepository.find({
+          where: { drone: { id: droneId } },
+          relations: ['medication'],
+          order: { loaded_at: 'DESC' },
+        });
+
+        const medications: LoadedMedicationsResponse['medications'] = medicationLoads.map((load) => ({
+          id: load.id,
+          medication: Medication.fromEntity(load.medication),
+          quantity: load.quantity,
+          loaded_at: load.loaded_at,
+        }));
+
+        return {
+          drone_id: droneId,
+          medications,
+        };
+      },
+      (error) => {
+        if (error instanceof ResourceNotFoundError) {
+          return new NotFoundError(error.message);
+        }
+
+        return new DatabaseError(`Failed to get loaded medications: ${error}`);
+      },
     );
 
     return result;
