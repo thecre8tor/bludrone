@@ -133,8 +133,20 @@ export class DroneService {
     return ok(result.value);
   }
 
-  async getLoadedMedications(droneId: string): Promise<Result<LoadedMedicationsResponse, AppError>> {
+  async getLoadedMedications(
+    droneId: string,
+  ): Promise<Result<LoadedMedicationsResponse, AppError>> {
     const result = await this.droneRepository.getLoadedMedications(droneId);
+
+    if (result.isErr()) {
+      return err(result.error);
+    }
+
+    return ok(result.value);
+  }
+
+  async getAvailableDrones(): Promise<Result<Drone[], AppError>> {
+    const result = await this.droneRepository.findAvailableForLoading();
 
     if (result.isErr()) {
       return err(result.error);

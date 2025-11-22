@@ -6,7 +6,7 @@ import {
   DroneMedicationLoadEntity,
   DroneState,
 } from '../entities';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, MoreThanOrEqual, Repository } from 'typeorm';
 import { RegisterDroneDto } from '../dto';
 import { DatabaseError, NotFoundError, Result, tryCatch } from '../../../core';
 import { Drone } from '../models';
@@ -253,6 +253,25 @@ export class DroneRepository {
 
         return new DatabaseError(`Failed to get loaded medications: ${error}`);
       },
+    );
+
+    return result;
+  }
+
+  async findAvailableForLoading(): Promise<Result<Drone[], DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        const droneEntities = await this.droneRepository.find({
+          where: {
+            state: DroneState.IDLE,
+            battery_capacity: MoreThanOrEqual(25),
+          },
+          order: { created_at: 'ASC' },
+        });
+
+        return droneEntities.map((entity) => Drone.fromEntity(entity, 0));
+      },
+      (error) => new DatabaseError(`Failed to find available drones: ${error}`),
     );
 
     return result;

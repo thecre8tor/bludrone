@@ -35,6 +35,18 @@ export class DroneController {
     }
   }
 
+  @Get('available')
+  async getAvailableDrones(): Promise<ApiResponse<Drone[]>> {
+    const result = await this.droneService.getAvailableDrones();
+
+    if (result.isOk()) {
+      return ApiResponseBuilder.success('Available drones fetched successfully', result.value);
+    } else {
+      const error = result.error as AppError;
+      throw error.toHttpException();
+    }
+  }
+
   @Post(':id/acquire')
   async acquireDrone(@Param('id') id: string): Promise<ApiResponse<{ session_id: String }>> {
     const result = await this.droneService.acquireDrone(id);
