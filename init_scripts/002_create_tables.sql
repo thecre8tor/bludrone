@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS drone_medication_loads (
 );
 
 CREATE INDEX IF NOT EXISTS idx_drone_medication_loads_session_id ON drone_medication_loads(session_id);
-CREATE INDEX IF NOT EXISTS idx_drone_medication_loads_session_id ON drone_medication_loads(session_id);
+CREATE INDEX IF NOT EXISTS idx_drone_medication_loads_drone_id ON drone_medication_loads(drone_id);
+CREATE INDEX IF NOT EXISTS idx_drone_medication_loads_medication_id ON drone_medication_loads(medication_id);
 
 -- Battery audit table
 CREATE TABLE IF NOT EXISTS battery_audit (

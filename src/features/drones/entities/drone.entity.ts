@@ -4,7 +4,9 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { DroneDeliverySessionEntity } from './drone_delivery_session.entity';
 
 export enum DroneModel {
   LIGHTWEIGHT = 'Lightweight',
@@ -48,6 +50,9 @@ export class DroneEntity {
     default: DroneState.IDLE,
   })
   state: DroneState;
+
+  @OneToMany(() => DroneDeliverySessionEntity, (session) => session.drone)
+  delivery_sessions: DroneDeliverySessionEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   created_at: Date;

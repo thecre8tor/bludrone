@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DroneEntity } from './entities';
+import { DroneDeliverySessionEntity, DroneEntity, DroneMedicationLoadEntity } from './entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DroneEntity])],
+  imports: [
+    TypeOrmModule.forFeature([DroneEntity, DroneDeliverySessionEntity, DroneMedicationLoadEntity]),
+  ],
   controllers: [],
   providers: [],
   exports: [],
