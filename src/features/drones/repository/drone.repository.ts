@@ -180,19 +180,30 @@ export class DroneRepository {
   ): Promise<Result<LoadDroneResponse, DatabaseError>> {
     const result = await tryCatch(
       async () => {
-        const loadEntity = this.droneMedicationLoadRepository.create({
-          session: { id: dto.session_id },
-          drone: { id: droneId },
-          medication: { id: dto.medication_id },
-          quantity: dto.quantity,
+        let fetchLoadedMedications = await this.droneMedicationLoadRepository.findOne({
+          where: {
+            drone: { id: droneId },
+            medication: { id: dto.medication_id },
+          },
         });
 
-        const savedEntity = await this.droneMedicationLoadRepository.save(loadEntity);
+        if (fetchLoadedMedications) {
+          fetchLoadedMedications.quantity += dto.quantity;
+        } else {
+          fetchLoadedMedications = this.droneMedicationLoadRepository.create({
+            session: { id: dto.session_id },
+            drone: { id: droneId },
+            medication: { id: dto.medication_id },
+            quantity: dto.quantity,
+          });
+        }
+
+        const savedEntity = await this.droneMedicationLoadRepository.save(fetchLoadedMedications);
 
         return {
           id: savedEntity.id,
-          drone_id: savedEntity.drone.id,
-          medication_id: savedEntity.medication.id,
+          drone_id: savedEntity?.drone?.id,
+          medication_id: savedEntity?.medication?.id,
           quantity: savedEntity.quantity,
           loaded_at: savedEntity.loaded_at,
         };
