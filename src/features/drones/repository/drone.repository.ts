@@ -56,4 +56,16 @@ export class DroneRepository {
 
     return result;
   }
+
+  async findAll(): Promise<Result<Drone[], DatabaseError>> {
+    const result = await tryCatch(
+      async () => {
+        const droneEntities = await this.droneRepository.find();
+        return droneEntities.map(Drone.fromEntity);
+      },
+      (error) => new DatabaseError(`Failed to find all drones: ${error}`),
+    );
+
+    return result;
+  }
 }

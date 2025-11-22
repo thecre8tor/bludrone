@@ -23,4 +23,14 @@ export class DroneService {
 
     return ok(result.value);
   }
+
+  async getDrones(): Promise<Result<Drone[], AppError>> {
+    const result = await this.droneRepository.findAll();
+
+    if (result.isErr()) {
+      return err(result.error);
+    }
+
+    return ok(result.value);
+  }
 }
