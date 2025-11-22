@@ -1,0 +1,29 @@
+# Development Dockerfile
+
+FROM node:18-alpine AS development
+
+# Install dumb-init and yarn
+RUN apk add --no-cache dumb-init && \
+    corepack enable && \
+    corepack prepare yarn@stable --activate
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock* .yarnrc.yml* ./
+
+# Install all dependencies (including dev dependencies)
+RUN yarn install --immutable || yarn install
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start development server with hot-reload
+CMD ["yarn", "start:watch"]

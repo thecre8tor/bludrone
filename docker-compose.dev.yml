@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Development)
+  postgres:
+    image: postgres:15-alpine
+    container_name: bludrone-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: ${DATABASE_NAME:-bludrone}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '${DATABASE_PORT:-5433}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - drone-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER:-postgres}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application (Development with hot-reload)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: bludrone-app
+    restart: unless-stopped
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5433
+      DATABASE_USER: ${DATABASE_USER:-bluser}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-secret}
+      DATABASE_NAME: ${DATABASE_NAME:-bludrone}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - drone-network
+    command: npm run start:watch
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  drone-network:
+    driver: bridge
