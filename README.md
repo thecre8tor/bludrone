@@ -18,24 +18,28 @@ A REST API service for managing a fleet of drones that deliver medications. Buil
 
 - **Battery Monitoring**: Automatic battery level audit logging every 5 minutes for all drones
 
-### Business Rules & Validations
+## Business Rules & Validations
 
-- **Drone Registration**:
-  - Serial numbers must be unique (max 100 characters)
-  - Weight limit cannot exceed 500 grams
-  - Battery capacity must be between 0-100%
-  - Supported models: Lightweight, Middleweight, Cruiserweight, Heavyweight
+1. **Drone Registration**:
+   - Serial numbers must be unique
+   - Weight limit cannot exceed 500 grams
+   - Battery capacity must be between 0-100%
+   - Supported models: Lightweight, Middleweight, Cruiserweight, Heavyweight
 
-- **Loading Session**:
-  - Only IDLE drones can start a loading session
-  - Drone battery must be >= 25% to acquire/start loading
-  - Once acquired, drone state changes to LOADING
+2. **Loading Session**:
+   - Only IDLE drones can start a loading session
+   - Drone battery must be >= 25% to start loading
+   - Once a session starts, drone state changes to LOADING
 
-- **Medication Loading**:
-  - Only drones in LOADING state can have medications added
-  - Total weight of all medications cannot exceed drone's weight limit
-  - Battery must remain >= 25% during loading operations
-  - Multiple loads of the same medication accumulate quantities
+3. **Medication Loading**:
+   - Only drones in LOADING state can have medications added
+   - Total weight of all medications cannot exceed drone's weight limit
+   - Battery must remain >= 25% during loading
+   - If the same medication is loaded multiple times, quantities are accumulated
+
+4. **Battery Monitoring**:
+   - Battery levels are audited every 5 minutes automatically
+   - Audit logs are stored in the `battery_audits` table
 
 ## Technology Stack
 
